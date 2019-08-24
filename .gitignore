@@ -1,0 +1,4 @@
+# Add files you don't want committed
+
+# Ignore Pycharm Project Metadata files
+.idea/
