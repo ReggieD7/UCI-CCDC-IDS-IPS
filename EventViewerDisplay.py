@@ -1,6 +1,7 @@
 import tkinter as tk
 
 from tkinter import ttk
+from tkinter import Menu
 
 class EventViewerDisplay:
     '''
@@ -12,25 +13,60 @@ class EventViewerDisplay:
         # Configuring Root Window
         self.root = tk.Tk()
         self.root.title("Cyber@UCI IDPS Display Manager")
-        self.height = 500
-        self.width = 500
-        canvas_bg = tk.Canvas(self.root, height=self.height, width=self.width, bg="#2c2f33")
-        canvas_bg.pack()
+        self.height = self.root.winfo_screenheight()
+        self.width = self.root.winfo_screenwidth()
 
-        # Main Frame
-        self.root_frame = ttk.Frame(self.root)
-        self.root_frame.pack(expand=True)
+        # bg="#23272a"
+        # Main Pane
+        self.pane = tk.PanedWindow(self.root, width=self.width, height=self.height,
+                              bg="#002200", bd=2, orient="horizontal")
+        self.pane.pack(fill="both", expand=True)
+
+        # File Menu
+        menu_bar = self.createMenu()
+        self.root.config(menu=menu_bar)
+
+        # Multi Frames
+        filter_frame = self.createFilterLogFrame()
+        table_frame = self.createTableLogFrame()
+        notification_frame = self.createNotificationFrame()
+
+        self.pane.add(child=filter_frame)
+        self.pane.add(child=table_frame)
+        self.pane.add(child=notification_frame)
         self.root.mainloop()
 
-    def createWindowLogFrame(self):
-        window_log_frame = ttk.Frame(self.root_frame, bg="#23272a")
-        window_log_frame.pack(side="left", fill="Y")
+    def createMenu(self):
+        """
+        Creates a menu to be added to the root element
+        :return: The menu bar for the display
+        """
+        menu_bar = Menu(self.root)
+        # Creating the file menu
+        file_menu = Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label="Exit")
+        file_menu.add_command(label="New")
+        file_menu.add_separator()
+        menu_bar.add_cascade(label="File", menu=file_menu)
+        return menu_bar
 
-    def createEventLogFrame(self):
-        pass
+
+    def createTableLogFrame(self):
+        # bg="#23272a"
+        frame = ttk.Frame(self.root, width=self.width * 0.5, height=self.height, relief="sunken")
+        return frame
+
+    # Create the Table
+
+
+    def createFilterLogFrame(self):
+        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        return frame
 
     def createNotificationFrame(self):
-        pass
+        ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        return frame
 
 
 if __name__ == "__main__":
