@@ -2,6 +2,11 @@ import tkinter as tk
 
 from tkinter import ttk
 from tkinter import Menu
+from tkinter import Button
+
+
+class ColorScheme:
+    pass
 
 class EventViewerDisplay:
     '''
@@ -61,6 +66,15 @@ class EventViewerDisplay:
 
     def createFilterLogFrame(self):
         frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+
+        application_button = Button(frame, text="Application", bd=0, pady=5, padx=5)
+        application_button.pack();
+        security_button = Button(frame, text="Security", bd=0, pady=5, padx=5)
+        security_button.pack();
+        system_button = Button(frame, text="System", bd=0, pady=5, padx=5)
+        system_button.pack();
+        setup_button = Button(frame, text="Setup", bd=0, pady=5, padx=5)
+        setup_button.pack();
         return frame
 
     def createNotificationFrame(self):
