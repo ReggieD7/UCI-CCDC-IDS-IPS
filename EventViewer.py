@@ -12,7 +12,7 @@ def query_event_viewer(log_name, log_id, number_of_events, oldest):
         if number_of_events == 'all':
             return subprocess.check_output(['Powershell.exe', 
                                     f"Get-WinEvent \
-                                    -FilterHashtable @{{LogName= ''{log_name}'' ; id={log_id}}} -Credential Administrator | format-list"])
+                                    -FilterHashtable @{{LogName= '{log_name}' ; id={log_id}}} -Credential Administrator | format-list"])
 
 def get_inputs():
     log_name = input('What type of log would you like to monitor? ')
