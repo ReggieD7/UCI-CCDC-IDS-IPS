@@ -41,7 +41,7 @@ class EventViewerDisplay:
         self.root.config(menu=menu_bar)
 
         # Multi Frames
-        filter_frame = LogFrame(self.root)
+        filter_frame = self.createFilterLogFrame()
         table_frame = self.createTableLogFrame()
         notification_frame = self.createNotificationFrame()
 
@@ -74,33 +74,15 @@ class EventViewerDisplay:
 
         return frame
 
-    # Create the Table
-
-    def createNotificationFrame(self):
-        ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
-        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
-        return frame
-
-
-class LogFrame(Frame):
-    """
-        Class is reponsible for taking user inputs and producing
-        the correct output
-    """
-
-    def __init__(self, master=None, **kwargs):
-        Frame.__init__(self, master, **kwargs)
-        self.createFilterLogFrame()
-
     def createFilterLogFrame(self):
         """
             The frame where the user will be able
             to input their data
         """
         padding = 5
-        panel_config = ttk.Frame(width=(self.winfo_screenwidth()*0.25),
-                                 height=(self.winfo_screenheight()*0.25),
-                                 master=self.master, borderwidth=1)
+        panel_config = ttk.Frame(width=(self.root.winfo_screenwidth() * 0.25),
+                                 height=(self.root.winfo_screenheight() * 0.25),
+                                 master=self.root, borderwidth=1)
         title_label = Label(panel_config,
                             text="Search For Windows Events",
                             padx=padding, pady=padding, bg="green")
@@ -115,7 +97,7 @@ class LogFrame(Frame):
                               *choices)
         logCombo.grid(row=2, column=1, rowspan=1, padx=padding, pady=padding)
         # Log ID
-        log_id_label = Label(master=panel_config, text="The ID to monitor: ")\
+        log_id_label = Label(master=panel_config, text="The ID to monitor: ") \
             .grid(row=3, column=0, padx=padding, pady=padding)
         id = StringVar(panel_config)
         log_id_field = Entry(master=panel_config, width=5, textvariable=id,
@@ -123,7 +105,7 @@ class LogFrame(Frame):
         # Entries to display
         log_id_label = Label(master=panel_config,
                              text="How many entries would you like displayed:"
-                                  "\nif all check all ")\
+                                  "\nif all check all ") \
             .grid(row=4, column=0, padx=padding, pady=padding)
         amount_to_display = StringVar(panel_config)
         log_id_field = Entry(master=panel_config, width=5, textvariable=amount_to_display,
@@ -133,7 +115,7 @@ class LogFrame(Frame):
                               variable=isAll).grid(row=4, column=2)
         # display oldest logs first
         log_age_label = Label(master=panel_config,
-                             text="Display Oldest Logs first:")\
+                              text="Display Oldest Logs first:") \
             .grid(row=5, column=0, padx=padding, pady=padding)
         isOld = IntVar(panel_config)
         age_check_button = Checkbutton(master=panel_config,
@@ -152,11 +134,92 @@ class LogFrame(Frame):
         clear_button = Button(panel_config, text="Clear", bd=0, pady=padding, padx=padding)
         clear_button.grid(row=7, column=2)
         panel_config.pack(fill="both", expand=True)
-        self.pack(fill="both", expand=True)
 
-    def query_events(self):
-        #log_name =
-        pass
+        return panel_config
+
+    # Create the Table
+
+    def createNotificationFrame(self):
+        ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        return frame
+
+
+# class LogFrame(Frame):
+# #     """
+# #         Class is reponsible for taking user inputs and producing
+# #         the correct output
+# #     """
+# #
+# #     def __init__(self, master=None, **kwargs):
+# #         Frame.__init__(self, master, **kwargs)
+# #         self.createFilterLogFrame()
+# #
+# #     def createFilterLogFrame(self):
+# #         """
+# #             The frame where the user will be able
+# #             to input their data
+# #         """
+# #         padding = 5
+# #         panel_config = ttk.Frame(width=(self.winfo_screenwidth()*0.25),
+# #                                  height=(self.winfo_screenheight()*0.25),
+# #                                  master=self.master, borderwidth=1)
+# #         title_label = Label(panel_config,
+# #                             text="Search For Windows Events",
+# #                             padx=padding, pady=padding, bg="green")
+# #         title_label.grid(row=0, column=0, rowspan=2, padx=padding, pady=padding)
+# #         # Log
+# #         log_label = Label(panel_config, text="Log to Monitor: ")
+# #         log_label.grid(row=2, column=0, rowspan=1, padx=padding, pady=padding)
+# #         choices = ["Security", "Application", "System", "Setup"]
+# #         default_selection = StringVar(panel_config)
+# #         default_selection.set(choices[0], )
+# #         logCombo = OptionMenu(panel_config, default_selection,
+# #                               *choices)
+# #         logCombo.grid(row=2, column=1, rowspan=1, padx=padding, pady=padding)
+# #         # Log ID
+# #         log_id_label = Label(master=panel_config, text="The ID to monitor: ")\
+# #             .grid(row=3, column=0, padx=padding, pady=padding)
+# #         id = StringVar(panel_config)
+# #         log_id_field = Entry(master=panel_config, width=5, textvariable=id,
+# #                              command=None).grid(row=3, column=1)
+# #         # Entries to display
+# #         log_id_label = Label(master=panel_config,
+# #                              text="How many entries would you like displayed:"
+# #                                   "\nif all check all ")\
+# #             .grid(row=4, column=0, padx=padding, pady=padding)
+# #         amount_to_display = StringVar(panel_config)
+# #         log_id_field = Entry(master=panel_config, width=5, textvariable=amount_to_display,
+# #                              command=None).grid(row=4, column=1)
+# #         isAll = IntVar(panel_config)
+# #         display = Checkbutton(master=panel_config, text="All",
+# #                               variable=isAll).grid(row=4, column=2)
+# #         # display oldest logs first
+# #         log_age_label = Label(master=panel_config,
+# #                              text="Display Oldest Logs first:")\
+# #             .grid(row=5, column=0, padx=padding, pady=padding)
+# #         isOld = IntVar(panel_config)
+# #         age_check_button = Checkbutton(master=panel_config,
+# #                                        variable=isOld).grid(row=5, column=1)
+# #         # Periodic Check
+# #         periodic_label = Label(master=panel_config,
+# #                                text="Enter how frequently you want to check:") \
+# #             .grid(row=6, column=0, padx=padding, pady=padding)
+# #         amount_to_display = StringVar(panel_config)
+# #         periodic_field = Entry(master=panel_config, width=5, textvariable=amount_to_display,
+# #                                command=None).grid(row=6, column=1)
+# #         # Action Buttons
+# #         submit_button = Button(panel_config, text="Submit", bd=0,
+# #                                pady=padding, padx=padding, command=None)
+# #         submit_button.grid(row=7, column=1)
+# #         clear_button = Button(panel_config, text="Clear", bd=0, pady=padding, padx=padding)
+# #         clear_button.grid(row=7, column=2)
+# #         panel_config.pack(fill="both", expand=True)
+# #         self.pack(fill="both", expand=True)
+# #
+# #     def query_events(self):
+# #         #log_name =
+# #         pass
 
 if __name__ == "__main__":
     EventViewerDisplay()
