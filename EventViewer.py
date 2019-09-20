@@ -58,10 +58,10 @@ def gen(info):
     
 def main():
     if builtin_administrator():
-        duration = eval(input('Enter how periodically you would like to check for certain ids: '))
-        user_inputs = get_inputs()
-        info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
         while True:
+            duration = eval(input('Enter how periodically you would like to check for certain ids: '))
+            user_inputs = get_inputs()
+            info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
             time.sleep(duration)
             parsed_info = gen(info)
             for i in parsed_info:
