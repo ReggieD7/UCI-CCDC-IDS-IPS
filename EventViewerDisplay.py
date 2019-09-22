@@ -1,5 +1,4 @@
 import tkinter as tk
-
 from tkinter import ttk
 from tkinter import Frame
 from tkinter import Menu
@@ -7,26 +6,19 @@ from tkinter import Label
 from tkinter import OptionMenu
 from tkinter import StringVar
 from tkinter import Entry
-from tkinter.font import Font
+from tkinter import font
 from tkinter import Checkbutton
 from tkinter import IntVar
 from tkinter import Button
-from tkinter import PanedWindow
+
 from EventViewer import query_event_viewer
+from EventViewer import gen
 
+from threading import *
+import time
 
-class StyleTheme:
-    '''
-        Responsible for managing the style of everything
-    '''
-    background = "#323232"
-
-    text_color = "#e9f1f7"
-
-
-
-
-
+class ColorScheme:
+    pass
 
 
 class EventViewerDisplay:
@@ -41,21 +33,30 @@ class EventViewerDisplay:
         self.root.title("Cyber@UCI IDPS Display Manager")
         self.height = self.root.winfo_screenheight()
         self.width = self.root.winfo_screenwidth()
+        #self.handleInputs = EventViewer()
+        
+        #Default Log Filter Values
+        self.logType="Security"
+        self.IDNum=""
+        self.numOfEntries="all"
+        self.newestLogsFirst=True
+        self.logFrequency=300
 
+        self.log_output= StringVar()
+        self.log_output.set("")
+        self.continueBackGroundProcess= True
+        
         # bg="#23272a"
         # Main Pane
-        self.pane = PanedWindow(self.root, width=self.width, height=self.height,
-                                bd=2, orient="horizontal")
-        self.pane.grid(column=0, row=0)
+        self.pane = tk.PanedWindow(self.root, width=self.width, height=self.height, bd=3, orient="horizontal")
+        self.pane.pack(fill="both", expand=False)
 
         # File Menu
         menu_bar = self.createMenu()
         self.root.config(menu=menu_bar)
 
         # Multi Frames
-        filter_frame = LogFrame(master=self.root,
-                                width=self.width*0.25,
-                                height=self.height*0.25)
+        filter_frame = self.createFilterLogFrame()
         table_frame = self.createTableLogFrame()
         notification_frame = self.createNotificationFrame()
 
@@ -78,176 +79,148 @@ class EventViewerDisplay:
         menu_bar.add_cascade(label="File", menu=file_menu)
         return menu_bar
 
-
-    def createTableLogFrame(self):
-        # bg="#23272a"
-        frame = Frame(self.root, width=self.width * 0.5,
-                      height=self.height, relief="sunken", bg=StyleTheme.background)
-        treeview = ttk.Treeview(frame)
-        return frame
-
-    # Create the Table
-
-    def createNotificationFrame(self):
-        ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
-        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
-        return frame
-
-
-class LogFrame(Frame):
-    """
-        Class is reponsible for taking user inputs and producing
-        the correct output
-    """
-
-    title_label: Label = None               # The Label for the component
-
-    log_label: Label = None                 # The Label for the logs
-
-    logCombo: OptionMenu = None             # The ComboBox dropdown
-
-    default_selection: StringVar = None     # Option Menu Selection
-
-    id_label: Label = None                  # The Label for the id
-
-    id: StringVar = None                    # The value of the id
-
-    log_id_field: Entry = None              # The field where id is entered
-
-    isAll: IntVar = None                    # The variable for loading all events
-
-    log_id_label: Label = None              # The Log ID label
-
-    amount_to_display: StringVar = None     # The variable to store amount of entities
-
-    display_checkbutton: Checkbutton = None # CheckButton for stuff
-
-    log_age_label: Label = None             # Label for the item age
-
-    isOld: IntVar = None                    #
-
-    age_check_button: Checkbutton = None    # CheckButton for checks
-
-    periodic_label: Label = None            # Label for the Frequency for checking
-
-    freq: StringVar = None                  # The frequency of occurence
-
-    periodic_field: Entry = None            # The field for the amount of hours
-
-    submit_button: Button = None            # The submission button
-
-    clear_button: Button = None             # Clears changes made
-
-    def __init__(self, master=None, **kwargs):
-        Frame.__init__(self, master, **kwargs)
-        self.grid()
-        self.create_filter_log_frame()
-
-    def create_filter_log_frame(self):
+    def createFilterLogFrame(self):
         """
             The frame where the user will be able
             to input their data
-        """
-        # Styling
+        """ 
         padding = 5
-        font_m = Font(family="Helvetica", size=16)
-        font_s = Font(family="Helvetica", size=12)
-
-        panel_config = Frame(width=(self.winfo_screenwidth()*0.25),
-                             height=(self.winfo_screenheight()*0.25),
-                             master=self, borderwidth=1, bg=StyleTheme.background)
-        # Title
-        self.title_label = Label(panel_config,
-                                 text="Search For Windows Events",
-                                 padx=padding, pady=padding)
-        self.title_label.config(font=font_m,
-                                bg=StyleTheme.background,
-                                fg=StyleTheme.text_color)
-        self.title_label.grid(row=0, column=0, rowspan=2, padx=padding, pady=padding)
-        # Log
-        self.log_label = Label(panel_config, text="Log to Monitor: ")
-        self.log_label.config(font=font_s,
-                              bg=StyleTheme.background,
-                              fg=StyleTheme.text_color)
-        self.log_label.grid(row=2, column=0, rowspan=1, padx=padding, pady=padding)
+        panel_config = Frame(width=(self.root.winfo_screenwidth() * 0.25),
+                                 height=(self.root.winfo_screenheight() * 0.25),
+                                 master=self.root, borderwidth=2)
+        title_label = Label(panel_config,
+                            text="<---------------------------Filter Options--------------------------->",
+                            padx=padding, pady=padding, bg="orange", font=("Helvetica", 10, "bold"))
+        title_label.grid(row=0, columnspan=3, padx=padding, pady=padding)
+        
+        # Log Type
+        log_label = Label(panel_config, text="Log Type", anchor="w")
+        log_label.grid(row=2, column=0, rowspan=1, padx=padding, pady=padding)
         choices = ["Security", "Application", "System", "Setup"]
         self.default_selection = StringVar(panel_config)
-        self.default_selection.set(choices[0])
-        self.logCombo = OptionMenu(panel_config, self.default_selection,
-                                   *choices)
-        self.logCombo.grid(row=2, column=1, rowspan=1, padx=padding, pady=padding)
+        self.default_selection.set(choices[0], )
+        logCombo = OptionMenu(panel_config, self.default_selection,
+                              *choices, command=self.getLogTypeValue)
+        logCombo.grid(row=2, column=1, columnspan=2, padx=padding, pady=padding)
+        
         # Log ID
-        self.id_label = Label(master=panel_config, text="The ID to monitor: ")
-        self.id_label.grid(row=3, column=0, padx=padding, pady=padding)
-        self.id_label.config(font=font_s,
-                             bg=StyleTheme.background,
-                             fg=StyleTheme.text_color)
-        self.id = StringVar(panel_config)
-        self.log_id_field = Entry(master=panel_config, width=5, textvariable=self.id,
-                                  command=None).grid(row=3, column=1)
+        log_id_label = Label(master=panel_config, text="ID Number", anchor="w") \
+            .grid(row=3, column=0, padx=padding, pady=padding)
+        id = StringVar(panel_config)
+        self.log_id_field = Entry(master=panel_config, width=5, textvariable=id,
+                             command=None)
+        self.log_id_field.grid(row=3, column=1)
+        
         # Entries to display
-        self.log_id_label = Label(master=panel_config,
-                                  text="How many entries would you like displayed:"
-                                  "\nif all check all ")
-        self.log_id_label.config(font=font_s,
-                                 bg=StyleTheme.background,
-                                 fg=StyleTheme.text_color)
-        self.log_id_label.grid(row=4, column=0, padx=padding, pady=padding)
-
-        self.amount_to_display = StringVar(panel_config)
-        self.log_id_field = Entry(master=panel_config, width=5, textvariable=self.amount_to_display,
-                                  command=None).grid(row=4, column=1)
-        self.isAll = IntVar(panel_config)
-        self.display_checkbutton = Checkbutton(master=panel_config, text="All",
-                                               variable=self.isAll).grid(row=4, column=2)
-        # display oldest logs first
-        self.log_age_label = Label(master=panel_config,
-                                   text="Display Oldest Logs first:")
-        self.log_age_label.grid(row=5, column=0, padx=padding, pady=padding)
-        self.log_age_label.config(font=font_s,
-                                  bg=StyleTheme.background,
-                                  fg=StyleTheme.text_color)
-        self.amount_to_display = StringVar(panel_config)
+        log_id_label = Label(master=panel_config,
+                             text="Number of Entries", anchor="w") \
+            .grid(row=4, column=0, padx=padding, pady=padding)
+        amount_to_display = StringVar(panel_config)
+        self.numOfEntries_field = Entry(master=panel_config, width=5, textvariable=amount_to_display,
+                             command=None)
+        self.numOfEntries_field.grid(row=4, column=1)
+        isAll = IntVar(panel_config)
+        display = Checkbutton(master=panel_config, text="All",
+                              variable=isAll).grid(row=4, column=2)
+        
+        # Display oldest logs first
+        log_age_label = Label(master=panel_config,
+                              text="Oldest Logs First?") \
+            .grid(row=5, column=0, padx=padding, pady=padding)
         self.isOld = IntVar(panel_config)
         self.age_check_button = Checkbutton(master=panel_config,
-                                            variable=self.isOld).grid(row=5, column=1)
+                                       variable=self.isOld)
+        self.age_check_button.grid(row=5, column=1)
+        
         # Periodic Check
-        self.periodic_label = Label(master=panel_config,
-                                    text="Enter how frequently you want to check:")
-        self.periodic_label.grid(row=6, column=0, padx=padding, pady=padding)
-        self.periodic_label.config(font=font_s,
-                                   bg=StyleTheme.background,
-                                   fg=StyleTheme.text_color)
-        self.freq = StringVar(panel_config)
-        self.periodic_field = Entry(master=panel_config, width=5, textvariable=self.freq,
-                                    command=None).grid(row=6, column=1)
+        periodic_label = Label(master=panel_config,
+                               text="Log Frequency") \
+                        .grid(row=6, column=0, padx=padding, pady=padding)
+        amount_to_display = StringVar(panel_config)
+        self.periodic_field = Entry(master=panel_config, width=5, textvariable=amount_to_display,
+                               command=None)
+        self.periodic_field.grid(row=6, column=1)
+        
         # Action Buttons
-        self.submit_button = Button(panel_config, text="Submit", bd=0,
-                                    pady=padding, padx=padding, command=self.query_events)
+        self.submit_button = Button(panel_config, text="Submit", bd=2,
+                               pady=padding, padx=padding, command=self.submitForm)
         self.submit_button.grid(row=7, column=1)
-        self.submit_button.config(width=10, height=1, background="#000")
-        self.clear_button = Button(panel_config, text="Clear", bd=0, pady=padding, padx=padding)
+        self.clear_button = Button(panel_config, text="Clear", bd=2, 
+                              pady=padding, padx=padding, command=self.clearEntries)
         self.clear_button.grid(row=7, column=2)
         panel_config.pack(fill="both", expand=True)
 
-    def query_events(self):
-        """
-            Queries the events
-            :return: None
-        """
+        return panel_config
 
-        log_name = self.default_selection.get()
-        log_id = self.id.get()
-        number_of_events = self.amount_to_display.get()
-        oldest = 'Y'
-        if self.isAll.get() == 1:
-            number_of_events = "all"
-        if self.isOld.get() == 0:
-            oldest = 'N'
-        if log_id is None or log_name is None or number_of_events is None:
-            query_object = query_event_viewer(log_name, log_id, number_of_events, oldest)
-            print(query_object.decode('UTF-8'))
+    # Create the Table
 
+    def createTableLogFrame(self):
+        # bg="#23272a"
+        padding=5
+        frame = ttk.Frame(self.root, width=self.width * 0.5, height=self.height, relief="sunken")
+        treeview = ttk.Treeview(frame)
+        title=Label(frame, text="<-----------------------------------------------------------------------Log Information------------------------------------------------------------------------>"
+                    ,padx=padding, pady=padding, bg="orange", font=("Helvetica", 10, "bold"))
+        title.grid(row=0, columnspan=2, padx=padding, pady=padding)
+        
+        stopButton= Button(frame, text="Stop", command=self.stopFunction)
+        stopButton.grid(row=1, column=0)
+        
+        resumeButton= Button(frame, text="Continue", command=self.resumeFunction)
+        resumeButton.grid(row=1, column=1)
+        
+        consoleOutput = Label(frame, textvariable=self.log_output, anchor="w")
+        consoleOutput.grid(row=2,columnspan=2)
+        
+        return frame
+
+    def createNotificationFrame(self):
+        frame = ttk.Frame(self.root, width=self.width * 0.25, height=self.height, relief="sunken")
+        return frame
+        
+
+    def getLogTypeValue(self, value):
+        self.logType= value
+    
+    def clearEntries(self):
+        self.log_id_field.delete(0, 'end')
+        self.numOfEntries_field.delete(0, 'end')
+        self.periodic_field.delete(0, 'end')
+        self.isOld.set(0)                
+        self.default_selection.set("Security")
+            
+    
+    def submitForm(self):
+        
+        self.IDNum= self.log_id_field.get()
+        self.numOfEntries= self.numOfEntries_field.get()
+        self.newestLogsFirst= self.isOld.get()
+        self.logFrequency=self.periodic_field.get()
+        
+        liveConsoleOutput = Thread(target=self.handleInputs)
+        liveConsoleOutput.daemon=True
+        liveConsoleOutput.start()
+        
+    def handleInputs(self):
+        user_inputs= [self.logType, self.IDNum, self.numOfEntries, self.newestLogsFirst]
+        duration= int(self.logFrequency)
+        info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
+        logText= ""
+        while self.continueBackGroundProcess:
+            time.sleep(duration)
+            parsed_info = gen(info)
+            for i in parsed_info:
+                logText = i + "\n" + logText
+                self.log_output.set(logText)
+                print(logText)
+            
+    def resumeFunction(self):
+        self.continueBackGroundProcess=True
+    
+    def stopFunction(self):
+        self.continueBackGroundProcess=False
+        
+                    
 
 if __name__ == "__main__":
     EventViewerDisplay()
