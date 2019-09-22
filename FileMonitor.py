@@ -2,6 +2,7 @@ import hashlib
 import os, time
 import tkinter 
 from tkinter import filedialog
+from datetime import datetime, timezone
 
 
 def make_checksum(file_path):
@@ -23,15 +24,21 @@ def check_checksum(original_hash, updated_hash):
 
 def get_meta_data(file_path):
     after_file_size = os.path.getsize(file_path)
-    m_time = os.path.getmtime(file_path)
+    
+    utc_m_time = int(os.path.getmtime(file_path))
+    utc_m_time = datetime.fromtimestamp(utc_m_time, timezone.utc)
+    local_m_time = utc_m_time.astimezone()
+    m_time = local_m_time.strftime("%Y/%m/%d %I:%M:%S %p")
+    
+    
     return after_file_size, m_time
 
 def main():
     root = tkinter.Tk()
     root.withdraw() # use to hide tkinter window
+    chosen_file_to_monitor = filedialog.askopenfilename()
 
     while True:
-        chosen_file_to_monitor = filedialog.askopenfilename()
         if len(chosen_file_to_monitor) > 0:
             time_check = float(input("Enter how long in hours you would like to check the desired file: "))
             print(f"You chose {chosen_file_to_monitor}")
@@ -47,7 +54,12 @@ def main():
             if check_if_hashs_are_equal:
                 print('File has not been altered')
             else:
-                print(get_meta_data(chosen_file_to_monitor))
+                meta_data = get_meta_data(chosen_file_to_monitor)
+                print(f'File: {chosen_file_to_monitor}')
+                print(f'File size before: {file_size_before} bytes')
+                print(f'File size after: {meta_data[0]} bytes')
+                print(f'Date and Time ALtered: {meta_data[1]}')
+
         else:
             pressed_cancel = input('Would you like to exit? [Yes/No] ')
             if pressed_cancel == 'Yes':
@@ -56,4 +68,3 @@ def main():
 if __name__ == "__main__":
     main()
     
-
