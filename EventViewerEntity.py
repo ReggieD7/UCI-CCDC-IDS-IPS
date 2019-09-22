@@ -1,6 +1,5 @@
 import EventViewer as ev
 import re
-import def
 
 class EventEntity:
 
