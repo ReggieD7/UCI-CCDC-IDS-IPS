@@ -23,7 +23,13 @@ def check_checksum(original_hash, updated_hash):
 
 def get_meta_data(file_path):
     after_file_size = os.path.getsize(file_path)
-    m_time = os.path.getmtime(file_path)
+    
+    utc_m_time = int(os.path.getmtime(file_path))
+    utc_m_time = datetime.fromtimestamp(utc_m_time, timezone.utc)
+    local_m_time = utc_m_time.astimezone()
+    m_time = local_m_time.strftime("%Y/%m/%d %I:%M:%S %p")
+    
+    
     return after_file_size, m_time
 
 def main():
