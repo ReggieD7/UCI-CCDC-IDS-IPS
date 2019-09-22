@@ -2,6 +2,7 @@ import hashlib
 import os, time
 import tkinter 
 from tkinter import filedialog
+from datetime import datetime, timezone
 
 
 def make_checksum(file_path):
