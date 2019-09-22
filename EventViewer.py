@@ -1,75 +1,75 @@
-p = subprocess.Popen([r'C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe', 
-                    'Get-EventLog -logname Security -Newest 5'], 
-                      stdin=subprocess.PIPE)
-
-
-
-
-
-import subprocess, sys
-
-def main():
-    while True:
-        #inputs
-        type_of_log = input("What type of log do you want to display (Security, Application, System)? Enter as 'Security' --with single quote marks: ")
-        event_ID = input("Which event ID(s) do you want to display? If multiple, enter in format ####, ####, ####: ")
-        log_properties = input("What log properties do you want to display (Message, InstanceID, TimeCreated, LevelDisplayName, etc.). If multiple, enter in format TimeCreated, InstanceId, Message: ")
-        newest = input("Do you want to display the newest logs or oldest logs first? Enter either newest or oldest: ")
-        number_of_logs = input("How many logs do you want to display. Enter a number or all: ")
-
-        #main
-        if newest == "newest":
-            if number_of_logs == "all":
-                event_log = subprocess.Popen(['powershell.exe', 'Get-WinEvent -FilterHashTable @{LogName = ', type_of_log,';ID =', event_ID, '} | Select-Object -Property', log_properties],
-                    stdout = sys.stdout)
-                event_log.communicate()
-            else:
-                event_log = subprocess.Popen(['powershell.exe', 'Get-WinEvent -FilterHashTable @{LogName = ', type_of_log, ';ID =', event_ID, '} -MaxEvents', number_of_logs, '| Select-Object -Property', log_properties],
-                    stdout=sys.stdout)
-                event_log.communicate()
-        elif newest == "oldest":
-            if number_of_logs == "all":
-                event_log = subprocess.Popen(['powershell.exe', 'Get-WinEvent -FilterHashTable @{LogName = ', type_of_log,';ID =', event_ID, '} -Oldest | Select-Object -Property', log_properties],
-                    stdout = sys.stdout)
-                event_log.communicate()
-            else:
-                event_log = subprocess.Popen(['powershell.exe', 'Get-WinEvent -FilterHashTable @{LogName = ', type_of_log, ';ID =', event_ID,'} -MaxEvents', number_of_logs, ' -Oldest | Select-Object -Property', log_properties],
-                    stdout=sys.stdout)
-                event_log.communicate()
-
-main()
----------------------------------------------------------------------------------------------------------------------------------------------------
 import subprocess
 import time
+
+def builtin_administrator():
+    builtin_admin_attributes = ((subprocess.check_output(['Powershell.exe', 'net user Administrator'])).decode('UTF-8'))
+    return "Account active               Yes" in builtin_admin_attributes
+        
 
 def query_event_viewer(log_name, log_id, number_of_events, oldest):
     if oldest == 'Y':
         if number_of_events.isdigit():
             return subprocess.check_output(['Powershell.exe', 
                                     f"Get-WinEvent \
-                                    -FilterHashtable @{{LogName= '{log_name}' ; id={log_id}}} -MaxEvents {number_of_events} -oldest -Credential Administrator | format-list"])
-                                    
-    else:
-        if number_of_events == 'all':
+                                    -FilterHashtable @{{LogName= '{log_name}' ; id=@({log_id})}} -MaxEvents {number_of_events} -oldest -Credential Administrator | format-list"])
+        elif number_of_events == 'all':
             return subprocess.check_output(['Powershell.exe', 
                                     f"Get-WinEvent \
-                                    -FilterHashtable @{{LogName= ''{log_name}'' ; id={log_id}}} -Credential Administrator | format-list"])
+                                    -FilterHashtable @{{LogName= '{log_name}' ; id=@({log_id})}} -oldest -Credential Administrator | format-list"])
+        else:
+            pass
+                                    
+    else:
+        if number_of_events.isdigit():
+            return subprocess.check_output(['Powershell.exe', 
+                                    f"Get-WinEvent \
+                                    -FilterHashtable @{{LogName= '{log_name}' ; id=@({log_id})}} -MaxEvents {number_of_events} -Credential Administrator | format-list"])
+        elif number_of_events == 'all':
+            return subprocess.check_output(['Powershell.exe', 
+                                    f"Get-WinEvent \
+                                    -FilterHashtable @{{LogName= '{log_name}' ; id=@({log_id})}} -Credential Administrator | format-list"])
+        else:
+            pass
+            
 
 def get_inputs():
     log_name = input('What type of log would you like to monitor? ')
-    log_id = input('Which id(s) would you like to monitor? ')
-    number_of_events = input('How many entries would you like displayed? If you would like all, please enter "all" ')
-    oldest = input('Would you like to display the oldest logs first? [Y/N] ') 
+    log_id = input('Which id(s) would you like to monitor? Enter in format: #### #### #### ')
+    log_id = ','.join([f"'{i}'" for i in (log_id).split()])
+    oldest = input('Would you like to display the oldest logs first? [Y/N] ')
+    number_of_events = input('How many entries would you like displayed? If you would like all, please enter "all" ') 
     return log_name, log_id, number_of_events, oldest
     
+def gen(info):    
+    for i in (info.decode('UTF-8')).split('\n'):
+        if 'TimeCreated' in i:
+            yield i.strip('\r')
+        elif 'Id' in i:
+            yield i.strip('\r')
+        elif 'Message' in i:
+            yield i.strip('\r')
+        elif ('Account Name' in i) and (len(i) > 41) and ('Network' not in i):
+            yield i.replace('\r', '')
+        elif ('Account Domain' in i) and (len(i) > 41) and ('Network' not in i):
+            yield i
+        else:
+            pass
+      
     
 def main():
-    duration = int(input('Enter how periodically you would like to check for certain ids'))
-    user_inputs = get_inputs()
-    info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
-    while True:
-        time.sleep(duration)
-        print(info.decode('UTF-8'))
+    if builtin_administrator():
+        while True:
+            duration = eval(input('Enter how periodically you would like to check for certain ids: '))
+            user_inputs = get_inputs()
+            info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
+            time.sleep(duration)
+            parsed_info = gen(info)
+            for i in parsed_info:
+                print(i)
+        
+    else:
+        print('You will need to enable the built-in Administrator')
 
+    
 if __name__ == "__main__":
     main()

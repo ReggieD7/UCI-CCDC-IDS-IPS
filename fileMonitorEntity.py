@@ -2,6 +2,7 @@ from pathlib import *
 from hashlib import *
 
 
+
 class FileMonitorEntity:
     """
        The Class is responsible for storing relevant data to a file
