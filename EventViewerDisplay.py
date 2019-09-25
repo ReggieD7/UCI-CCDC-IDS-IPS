@@ -12,8 +12,14 @@ from tkinter import Checkbutton
 from tkinter import IntVar
 from tkinter import Button
 from tkinter import PanedWindow
-from EventViewer import query_event_viewer
 
+import _thread
+import time
+import threading
+
+import EventViewer as ev
+from EventViewerEntity import EventEntity
+from EventViewerEntity import EventEntityManager
 
 class StyleTheme:
     '''
@@ -22,11 +28,6 @@ class StyleTheme:
     background = "#323232"
 
     text_color = "#e9f1f7"
-
-
-
-
-
 
 
 class EventViewerDisplay:
@@ -42,7 +43,6 @@ class EventViewerDisplay:
         self.height = self.root.winfo_screenheight()
         self.width = self.root.winfo_screenwidth()
 
-        # bg="#23272a"
         # Main Pane
         self.pane = PanedWindow(self.root, width=self.width, height=self.height,
                                 bd=2, orient="horizontal")
@@ -207,7 +207,7 @@ class LogFrame(Frame):
         self.log_age_label.config(font=font_s,
                                   bg=StyleTheme.background,
                                   fg=StyleTheme.text_color)
-        self.amount_to_display = StringVar(panel_config)
+        # self.amount_to_display = StringVar(panel_config)
         self.isOld = IntVar(panel_config)
         self.age_check_button = Checkbutton(master=panel_config,
                                             variable=self.isOld).grid(row=5, column=1)
@@ -223,7 +223,7 @@ class LogFrame(Frame):
                                     command=None).grid(row=6, column=1)
         # Action Buttons
         self.submit_button = Button(panel_config, text="Submit", bd=0,
-                                    pady=padding, padx=padding, command=self.query_events)
+                                    pady=padding, padx=padding, command=self.start)
         self.submit_button.grid(row=7, column=1)
         self.submit_button.config(width=10, height=1, background="#000")
         self.clear_button = Button(panel_config, text="Clear", bd=0, pady=padding, padx=padding)
@@ -235,18 +235,39 @@ class LogFrame(Frame):
             Queries the events
             :return: None
         """
-
         log_name = self.default_selection.get()
         log_id = self.id.get()
         number_of_events = self.amount_to_display.get()
         oldest = 'Y'
+        duration = int(self.freq.get())  # In hours
         if self.isAll.get() == 1:
             number_of_events = "all"
         if self.isOld.get() == 0:
             oldest = 'N'
-        if log_id is None or log_name is None or number_of_events is None:
-            query_object = query_event_viewer(log_name, log_id, number_of_events, oldest)
-            print(query_object.decode('UTF-8'))
+        if log_id != "" and log_name is not None and number_of_events != "" and duration != "":
+            delay = int(self.freq.get()) * 6
+            ev_entity = None
+            ticker =  threading.Event()
+            event_entities = EventEntityManager.get_event_entities()
+            while not ticker.wait(delay):
+                # This thread will repeat itself
+                # TODO Admin keeps popping up
+                ev_entity = self.test(log_name, log_id, number_of_events, oldest)
+                # TODO Create function that will add in new items
+                event_entities[ev_entity.id].append([ticker, [ev_entity]])
+                print("yo")
+
+    def test(self, log_name, log_id, number_of_events, oldest):
+        query_object = ev.query_event_viewer(log_name, log_id, number_of_events, oldest)
+        if query_object is not None:
+            ev_entity = EventEntity(query_object)
+            print(ev_entity)
+            return ev_entity
+
+
+    def start(self):
+        # Generates a thread when submitted
+        _thread.start_new_thread(self.query_events, ())
 
 
 if __name__ == "__main__":
