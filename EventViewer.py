@@ -48,9 +48,9 @@ def gen(info):
             yield i.strip('\r')
         elif 'Message' in i:
             yield i.strip('\r')
-        elif ('Account Name' in i) and (len(i) > 41) and ('Network' not in i):
+        elif ('Account Name' in i):
             yield i.replace('\r', '')
-        elif ('Account Domain' in i) and (len(i) > 41) and ('Network' not in i):
+        elif ('Account Domain' in i):
             yield i
         else:
             pass
