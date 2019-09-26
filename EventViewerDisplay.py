@@ -317,8 +317,10 @@ class EventViewerDisplay:
     def handleInputs_fileMonitor(self):
         while self.continueBackGroundProcess_fileMonitor:
             if len(self.fileName) > 0:
+                
                 original_hash = make_checksum(self.fileName)
-            
+                file_size_before = os.path.getsize(self.fileName)
+                
                 time.sleep(float(self.checkFrequency)*3600)
             
                 updated_hash = make_checksum(self.fileName)
@@ -331,11 +333,12 @@ class EventViewerDisplay:
                     self.fileStatus_box.insert(0, f'{time_current} | File has not been altered')
                     self.fileStatus_box.insert(1, '<-------------------------------->')
                 else:
+                    
                     meta_data = get_meta_data(self.fileName)
                     self.fileStatus_box.insert(0, f'{time_current} | File: {self.fileName}')
                     self.fileStatus_box.insert(1, f'{time_current} | File size before: {file_size_before} bytes')
                     self.fileStatus_box.insert(2, f'{time_current} | File size after: {meta_data[0]} bytes')
-                    self.fileStatus_box.insert(3, f'{time_current} | Date and Time ALtered: {meta_data[1]}')
+                    self.fileStatus_box.insert(3, f'{time_current} | Date and Time Altered: {meta_data[1]}')
                     self.fileStatus_box.insert(4, '<-------------------------------->')
 
             
