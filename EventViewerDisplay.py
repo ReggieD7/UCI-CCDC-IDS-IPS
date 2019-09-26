@@ -298,9 +298,9 @@ class EventViewerDisplay:
         new_logs_first = 'N'
         if self.newestLogsFirst == 1:
             new_logs_first = 'Y'
-        info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], new_logs_first)
         num=1
         while self.continueBackGroundProcess_logMonitor:
+            info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], new_logs_first)
             time.sleep(duration)
             parsed_info = gen(info)
             parsed_info_arr= []
