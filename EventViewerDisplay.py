@@ -295,7 +295,10 @@ class EventViewerDisplay:
     def handleInputs_logMonitor(self):
         user_inputs= [self.logType, self.IDNum, self.numOfEntries, self.newestLogsFirst]
         duration= int(self.logFrequency)
-        info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], user_inputs[3])
+        new_logs_first = 'N'
+        if self.newestLogsFirst == 1:
+            new_logs_first = 'Y'
+        info = query_event_viewer(user_inputs[0], user_inputs[1], user_inputs[2], new_logs_first)
         num=1
         while self.continueBackGroundProcess_logMonitor:
             time.sleep(duration)
